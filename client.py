@@ -4,7 +4,7 @@ import logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 
-knocks = [1000,2000,4000]
+knocks = [1000,2000,3000]
 
 
 def portKnock():
