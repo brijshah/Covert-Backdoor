@@ -42,7 +42,7 @@ def main():
     while 1:
         command = raw_input("Enter command: ")
         sendCommand('tcp', command, 'dumb')
-        sniff(filter='dst port 8000 and src port 8000', count=1 prn=recvCommand)
+        sniff(filter='dst port 8000 and src port 8000', count=1, prn=recvCommand)
 
 if __name__ == '__main__':
     main()
