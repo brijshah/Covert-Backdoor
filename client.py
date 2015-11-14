@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import logging
+import time
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 
@@ -11,6 +12,7 @@ def portKnock():
     for knock in knocks:
         packet = IP(dst="192.168.0.19")/UDP(sport=knock, dport=7000)
         send(packet)
+        time.sleep(1)
 
 def main():
     portKnock()
