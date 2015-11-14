@@ -7,8 +7,8 @@ from ctypes import cdll, byref, create_string_buffer
 
 state = 0
 ports = [1000, 2000, 3000]
-unauthClients = {}
-authedClients = {}
+# unauthClients = {}
+# authedClients = {}
 
 # def encrypt(data):
 #     cipherText = triplesec.encrypt(b"string", b'* password *')
@@ -42,27 +42,28 @@ def knock(packet):
         if UDP in packet:
             ip = packet[IP].src
             if ip in unauthClients.keys():
-                if packet[UDP].sport == 1000 and unauthClients[ip] == 0:
-                    unauthClients[ip] = 1
+                if packet[UDP].sport == 1000 and state == 0:
+                    state = 1
                     print packet[IP].src + " state 1"
-                elif packet[UDP].sport == 2000 and unauthClients[ip] == 1:
-                    unauthClients[ip] = 2
+                elif packet[UDP].sport == 2000 state == 1:
+                    state = 2
                     print packet[IP].src + " state 2"
-                elif packet[UDP].sport == 3000 and unauthClients[ip] == 2:
-                    unauthClients[ip] = 3
+                elif packet[UDP].sport == 3000 and state == 2:
+                    state = 3
                     print packet[IP].src + " state 3"
                 else:
                     print "You suck, state = 0"
-                    print unauthClients
             else:
                 if packet[UDP].sport == 1000:
-                    unauthClients[ip] = 1
+                    state = 1
                     print packet[IP].src + " state 1"
                 else:
-                    unauthClients[ip] = 0
+                    state = 0
 
 def main():
-    sniff(filter='udp', prn=knock)
+    while state is not 3:
+        sniff(filter='udp', prn=knock, count=1)
+    print test
 
 if __name__ == '__main__':
     main()
