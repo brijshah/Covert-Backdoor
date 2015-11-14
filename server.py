@@ -41,24 +41,17 @@ def knock(packet):
     if IP in packet:
         if UDP in packet:
             ip = packet[IP].src
-            if ip in unauthClients.keys():
-                if packet[UDP].sport == 1000 and state == 0:
-                    state = 1
-                    print packet[IP].src + " state 1"
-                elif packet[UDP].sport == 2000 and state == 1:
-                    state = 2
-                    print packet[IP].src + " state 2"
-                elif packet[UDP].sport == 3000 and state == 2:
-                    state = 3
-                    print packet[IP].src + " state 3"
-                else:
-                    print "You suck, state = 0"
+            if packet[UDP].sport == 1000 and state == 0:
+                state = 1
+                print packet[IP].src + " state 1"
+            elif packet[UDP].sport == 2000 and state == 1:
+                state = 2
+                print packet[IP].src + " state 2"
+            elif packet[UDP].sport == 3000 and state == 2:
+                state = 3
+                print packet[IP].src + " state 3"
             else:
-                if packet[UDP].sport == 1000:
-                    state = 1
-                    print packet[IP].src + " state 1"
-                else:
-                    state = 0
+                print "You suck, state = 0"
 
 def main():
     while state is not 3:
