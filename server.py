@@ -7,6 +7,7 @@ from ctypes import cdll, byref, create_string_buffer
 
 state = 0
 ports = [1000, 2000, 3000]
+password = 'dumb'
 # unauthClients = {}
 # authedClients = {}
 

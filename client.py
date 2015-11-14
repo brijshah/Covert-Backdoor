@@ -39,7 +39,7 @@ def main():
 
     while 1:
         command = raw_input("Enter command: ")
-        sendCommand('tcp', command, 'ballsack')
+        sendCommand('tcp', command, 'dumb')
 
 if __name__ == '__main__':
     main()
