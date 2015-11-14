@@ -56,7 +56,7 @@ def knock(packet):
 def main():
     while state is not 3:
         sniff(filter='udp', prn=knock, count=1)
-    print test
+    print "test"
 
 if __name__ == '__main__':
     main()
