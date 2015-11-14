@@ -45,7 +45,7 @@ def knock(packet):
                 if packet[UDP].sport == 1000 and state == 0:
                     state = 1
                     print packet[IP].src + " state 1"
-                elif packet[UDP].sport == 2000 state == 1:
+                elif packet[UDP].sport == 2000 and state == 1:
                     state = 2
                     print packet[IP].src + " state 2"
                 elif packet[UDP].sport == 3000 and state == 2:
