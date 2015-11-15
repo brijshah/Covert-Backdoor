@@ -28,8 +28,8 @@ def sendCommand(protocol, data, password):
 def recvCommand(packet):
    if packet.haslayer(IP) and packet.haslayer(Raw):
         data = packet['Raw'].load
-        if data.startswith(password):
-            data = data[len(password):]
+        if data.startswith(configfile.password):
+            data = data[len(configfile.password):]
             print data
 
 def main():
