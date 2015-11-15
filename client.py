@@ -16,6 +16,7 @@ def portKnock():
     for knock in configfile.knock:
         packet = IP(dst=configfile.ip)/UDP(sport=knock, dport=7000)
         send(packet)
+        time.sleep(1)
 
 def sendCommand(protocol, data, password):
     if protocol == "tcp":
