@@ -1,16 +1,8 @@
 #!/usr/bin/python
 
-import time, triplesec, configfile, logging
+import time, configfile, logging, encryption
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
-
-def encrypt(data):
-    ciphertext = triplesec.encrypt(data, 'top-secret-pw')
-    return ciphertext
-
-def decrypt(data):
-    plaintext = triplesec.decrypt(data, 'top-secret-pw')
-    return plaintext
 
 def portKnock():
     for knock in configfile.knock:
