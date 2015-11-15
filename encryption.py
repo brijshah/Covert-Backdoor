@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import triplesec
 
 def encrypt(data, password):
