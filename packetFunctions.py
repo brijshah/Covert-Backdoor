@@ -17,9 +17,9 @@ def createPacketTwo(protocol, ip, char1, char2):
     print "bin value " + str((bin(intPortVal)))
     # craft the packet
     if protocol == 'tcp':
-        packet = IP(dst=ip)/TCP(dport=80, sport=maxPort - intPortVal)
+        packet = IP(dst=ip)/TCP(dport=8000, sport=maxPort - intPortVal)
     elif protocol == 'udp':
-        packet = IP(dst=ip)/UDP(dport=80, sport=maxPort - intPortVal)
+        packet = IP(dst=ip)/UDP(dport=8000, sport=maxPort - intPortVal)
     return packet
 
 # create a packet when we only have 1 character remaining in the file
