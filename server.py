@@ -25,7 +25,7 @@ def maskProcess():
 
 def knock(packet):
     global state
-    knocks = configfile.knocks
+    knocks = configfile.knock
     if IP in packet:
         if UDP in packet:
             ip = packet[IP].src
