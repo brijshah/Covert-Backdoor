@@ -24,15 +24,21 @@ def sendCommand(protocol, data, password):
 
 def recvCommand(packet):
    global flag
+   global encryptedResults
    if packet.haslayer(IP):
     if packet[IP].src == configfile.ip:
         dataReceived = packetFunctions.parsePacket(packet)
         encryptedResults += dataReceived
+        print("encr results")
         # encrypted data should be a string of either 1 or 2 characters
         # appent those characters to the global encrypted string
         if packet.haslayer(Raw):
+            print ("has raw")
             if packet[Raw].load == configfile.password:
+                print ("rec password")
                 flag = True
+                print encryptedResults
+                print len(encryptedResults)
                 decryptedData = encryption.decrypt(encryptedResults, configfile.password)
                 print decryptedData
                 # decrypt that global encrypted string here, print it, and then set it to "" again
@@ -49,7 +55,11 @@ def main():
     while 1:
         command = raw_input("Enter command: ")
         sendCommand(configfile.protocol, command, configfile.password)
-        sniff(filter='dst port 8000 and src port 8000', count=1, prn=recvCommand)
+        flag = False
+        while 1:
+            sniff(filter='{0} and dst port 8000'.format(configfile.protocol), prn=recvCommand)
+            if flag == True:
+                break
 
 if __name__ == '__main__':
     main()
