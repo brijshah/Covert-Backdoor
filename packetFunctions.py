@@ -1,4 +1,5 @@
 from scapy.all import *
+logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 
 maxPort = 65535
 
@@ -52,10 +53,10 @@ def parsePacket(packet):
         binChar1 = binVal[0:binLen - 8]
         char1 = chr(int(binChar1, 2))
         char2 = chr(int(binChar2, 2))
-        print "Received: " + char1 + char2
+        #print "Received: " + char1 + char2
         return str(char1 + char2)
     else:
         # binary string contains one ascii character
         char = chr(int(binVal, 2))
-        print "Received: " + char
+        #print "Received: " + char
         return str(char)

