@@ -29,7 +29,7 @@ def createPacketTwo(protocol, ip, char1, char2):
 def createPacketOne(protocol, ip, char):
     # get the binary value of the character
     binChar = bin(ord(char))[2:].zfill(8)
-    print binChar
+    #print binChar
     #get the integer value of that binary value
     intPortVal = int(binChar, 2)
     # craft the packet

