@@ -28,18 +28,3 @@ class FileWatch(FileSystemEventHandler):
   def on_moved(self, event):
     print "File moved: " + event.src_path + " to " + event.dest_path
     # send message saying file moved
-
-def main():
-  observer = Observer()
-  observer.schedule(FileWatch(), '/Users/callumstyan/git')
-  observer.start()
-
-  try:
-    while True:
-      time.sleep(1)
-  except KeyboardInterrupt:
-    observer.stop()
-
-  observer.join()
-
-main()
