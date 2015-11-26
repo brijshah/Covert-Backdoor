@@ -1,4 +1,6 @@
 #!/usr/bin/python
+logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+from scapy.all import *
 
 import logging, setproctitle, triplesec, encryption, configfile, helpers, os, sys
 from ctypes import cdll, byref, create_string_buffer
