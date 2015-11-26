@@ -57,11 +57,11 @@ def recvFile(packet):
                 if packet[Raw].load == configfile.password:
                     flag = True
                     #decryptedData = encryption.decrypt(results, configfile.password)
-                    if results.startswith(configfile.password):
-                        data = results[len(configfile.password):]
-                    else:
-                        raise "Incorrect password in data."
-                    print data
+                    # if results.startswith(configfile.password):
+                    #     data = results[len(configfile.password):]
+                    # else:
+                    #     raise "Incorrect password in data."
+                    print results
                     results = ""
 
 def main():
