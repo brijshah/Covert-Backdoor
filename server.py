@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import logging, setproctitle, triplesec, encryption, configfile, helpers
+import logging, setproctitle, triplesec, encryption, configfile, helpers, os
 from ctypes import cdll, byref, create_string_buffer
 from watchdog.observers import Observer
 from fileWatch import FileWatch
