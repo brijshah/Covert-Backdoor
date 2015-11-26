@@ -26,6 +26,6 @@ class FileWatch(FileSystemEventHandler):
   def on_moved(self, event):
     print "File moved: " + event.src_path + " to " + event.dest_path
     message = self.password + "File moved: " + event.src_path + " to " + event.dest_path
-    encryptedMessage = encryption.encrypt(message, password)
+    encryptedMessage = encryption.encrypt(message, self.password)
     # send message saying file moved
-    helpers.sendMessage(encryptedMessage, password, protocol, clientIP, 6000)
+    helpers.sendMessage(encryptedMessage, self.password, self.protocol, self.clientIP, 6000)
