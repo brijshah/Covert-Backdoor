@@ -72,7 +72,8 @@ def watchAdd(path, ip):
     helpers.sendMessage(encrptedMessage
                        , configfile. password
                        , configfile.protocol
-                       , ip)
+                       , ip
+                       , 8000)
     try:
         while True:
             time.sleep(1)
