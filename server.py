@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import logging, setproctitle, triplesec, encryption, configfile, helpers, os
+import logging, setproctitle, triplesec, encryption, configfile, helpers, os, sys
 from ctypes import cdll, byref, create_string_buffer
 from watchdog.observers import Observer
 from fileWatch import FileWatch
@@ -16,7 +16,7 @@ watch= ''
 
 def checkRoot():
     if(os.getuid() != 0):
-        exit("This program must be run with root. Try Again..")
+        sys.exit("This program must be run with root. Try Again..")
 
 def setProcessName(name):
     libc = cdll.LoadLibrary('libc.so.6')
