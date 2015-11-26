@@ -17,10 +17,6 @@ class FileWatch(FileSystemEventHandler):
     print "File created: " + event.src_path
     # helpers.sendFile(clientIP, event.src_path)
 
-  def on_modified(self, event):
-    print "File modified: " + event.src_path
-    # helpers.sendFile(clientIP, event.src_path)
-
   def on_deleted(self, event):
     print "File deleted: " + event.src_path
     # send a message saying the file was delted
