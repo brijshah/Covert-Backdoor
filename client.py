@@ -47,7 +47,22 @@ def recvCommand(packet):
                 Results = ""
 
 def recvFile(packet):
-    print "in recvFunc"
+    flag = False
+    results = ""
+    if packet.haslayer(IP):
+        if packet[IP].src == configfile.ip:
+            dataReceived = helpers.parsePacket(packet)
+            results += (dataReceived)
+            if packet.haslayer(Raw):
+                if packet[Raw].load == configfile.password:
+                    flag = True
+                    decryptedData = encryption.decrypt(results, configfile.password)
+                    if decryptedData.startswith(configfile.password):
+                        data = decryptedData[len(configfile.password):]
+                    else:
+                        raise "Incorrect password in data."
+                    print data
+                    results = ""
 
 def main():
     global flag
