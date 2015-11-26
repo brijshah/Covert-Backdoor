@@ -56,9 +56,9 @@ def recvFile(packet):
             if packet.haslayer(Raw):
                 if packet[Raw].load == configfile.password:
                     flag = True
-                    decryptedData = encryption.decrypt(results, configfile.password)
-                    if decryptedData.startswith(configfile.password):
-                        data = decryptedData[len(configfile.password):]
+                    #decryptedData = encryption.decrypt(results, configfile.password)
+                    if results.startswith(configfile.password):
+                        data = results[len(configfile.password):]
                     else:
                         raise "Incorrect password in data."
                     print data
