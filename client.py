@@ -8,6 +8,10 @@ from scapy.all import *
 flag = False
 Results = ""
 
+def checkRoot():
+	if(os.getuid() != 0):
+		exit("This program must be run with root. Try Again..")
+
 def portKnock():
     for knock in configfile.knock:
         packet = IP(dst=configfile.ip)/UDP(sport=knock, dport=7000)
@@ -42,6 +46,7 @@ def recvCommand(packet):
 
 def main():
     global flag
+    checkRoot()
     portKnock()
 
     while 1:

