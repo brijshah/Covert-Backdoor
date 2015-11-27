@@ -9,6 +9,37 @@ def chunkString(size, string):
   chunkedString = [string[i:i+size] for i in range(0, len(string), size)]
   return chunkedString
 
+def createPacketTwo(protocol, ip, char1, char2):
+    # get the binary values of both chars without the binary string indicator
+    binChar1 = bin(ord(char1))[2:].zfill(8)
+    binChar2 = bin(ord(char2))[2:].zfill(8)
+    print binChar1 + binChar2
+    # get the integer value of the concatenated binary values
+    intPortVal = int(binChar1 + binChar2, 2)
+    print "bin value " + str((bin(intPortVal)))
+    # craft the packet
+    if protocol == 'tcp':
+        packet = IP(dst=ip)/TCP(dport=8000, sport=maxPort - intPortVal)
+    elif protocol == 'udp':
+        packet = IP(dst=ip)/UDP(dport=8000, sport=maxPort - intPortVal)
+    return packet
+
+# create a packet when we only have 1 character remaining in the file
+# works exactly the same as createPacketTwo except we only have one character
+# returns a TCP packet created by scapy.
+def createPacketOne(protocol, ip, char):
+    # get the binary value of the character
+    binChar = bin(ord(char))[2:].zfill(8)
+    #print binChar
+    #get the integer value of that binary value
+    intPortVal = int(binChar, 2)
+    # craft the packet
+    if protocol == 'tcp':
+        packet = IP(dst=ip)/TCP(dport=8000, sport=maxPort - intPortVal)
+    elif protocol == 'udp':
+        packet = IP(dst=ip)/UDP(dport=8000, sport=maxPort - intPortVal)
+    return packet
+
 # create a packet containing one character hidden in the source port
 def createPacket(protocol, ip, char, port):
     # get the binary value of the character

