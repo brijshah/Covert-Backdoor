@@ -1,4 +1,4 @@
-ip = "192.168.15.12"
+ip = "192.168.0.9"
 password = "abcdefyoyo"
 protocol = "udp"
 knock = [1000, 2000, 3000]

