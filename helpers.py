@@ -1,6 +1,6 @@
-from scapy.all import *
-import binascii, time, os
+import binascii, time, os, logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+from scapy.all import *
 
 maxPort = 65535
 
@@ -38,20 +38,6 @@ def createPacketOne(protocol, ip, char):
         packet = IP(dst=ip)/TCP(dport=8000, sport=maxPort - intPortVal)
     elif protocol == 'udp':
         packet = IP(dst=ip)/UDP(dport=8000, sport=maxPort - intPortVal)
-    return packet
-
-# create a packet containing one character hidden in the source port
-def createPacket(protocol, ip, char, port):
-    # get the binary value of the character
-    binChar = bin(ord(char))[2:].zfill(8)
-    #print binChar
-    #get the integer value of that binary value
-    intPortVal = int(binChar, 2)
-    # craft the packet
-    if protocol == 'tcp':
-        packet = IP(dst=ip)/TCP(dport=port, sport=maxPort - intPortVal)
-    elif protocol == 'udp':
-        packet = IP(dst=ip)/UDP(dport=port, sport=maxPort - intPortVal)
     return packet
 
 # need comment

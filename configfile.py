@@ -1,5 +1,5 @@
-ip = "192.168.15.12"
+ip = "192.168.0.9"
 password = "abcdefyoyo"
-protocol = "tcp"
-knock = [1000, 2000, 3000]
+protocol = "udp"
+knock = [1000, 2000, 3060]
 masterkey = "12345678901234567890123456789012"
