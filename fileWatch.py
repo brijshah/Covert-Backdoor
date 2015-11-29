@@ -2,11 +2,6 @@ import watchdog, helpers, configfile, time, encryption
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-# def sendMessage(message):
-#   # encrypt the data
-#   chunkedMessage = helpers.chunkString(2, message)
-#   for chunk in chunkedMessage:
-#     #
 # object for watching for files on the machine
 class FileWatch(FileSystemEventHandler):
   clientIP = ""
@@ -26,6 +21,7 @@ class FileWatch(FileSystemEventHandler):
   def on_moved(self, event):
     print "File moved: " + event.src_path + " to " + event.dest_path
     message = self.password + "File moved: " + event.src_path + " to " + event.dest_path
+    print self.password
     encryptedMessage = encryption.encrypt(message, self.password)
     # send message saying file moved
     helpers.sendMessage(encryptedMessage, self.password, self.protocol, self.clientIP, 6000)

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import logging, setproctitle, triplesec, encryption, configfile, helpers, os, sys
+import logging, setproctitle, triplesec, encryption, configfile, helpers, os, sys, multiprocessing
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 from ctypes import cdll, byref, create_string_buffer
@@ -7,9 +7,6 @@ from watchdog.observers import Observer
 from fileWatch import FileWatch
 
 state = 0
-ports = [1000, 2000, 3000]
-password = 'abcdefyoyo'
-maxPort = 65535
 observer = Observer()
 watch= ''
 # unauthClients = {}

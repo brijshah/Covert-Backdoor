@@ -46,6 +46,7 @@ def recvFile(packet):
     flag = False
     results = ""
     if packet.haslayer(IP):
+        print "Hello"
         if packet[IP].src == configfile.ip:
             dataReceived = helpers.parsePacket(packet)
             results += (dataReceived)
