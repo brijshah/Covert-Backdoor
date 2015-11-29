@@ -1,5 +1,5 @@
 from scapy.all import *
-import binascii, time
+import binascii, time, os
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 
 maxPort = 65535
@@ -78,11 +78,14 @@ def parsePacket(packet):
 
 # open a file in binary mode and return a string of the binary data
 def sendFile(ip, filePath, protocol, port):
+  fileSize = os.path.getsize(filePath)
   try: # read the file byte by byte rather than reading the entire file into memory
     with open(filePath, 'rb') as fileDescriptor:
       while True:
         byte = fileDescriptor.read(1)
         if not byte:
+          print fileDescriptor.tell()
+          print fileSize
           break
         # we need the '1' + ... because python will trim the leading character if it's a zero
         byte = bin(int('1' + binascii.hexlify(bytes), 16))[3:].zfill(8)
