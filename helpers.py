@@ -81,14 +81,13 @@ def sendFile(ip, filePath, protocol, port):
   fileSize = os.path.getsize(filePath)
   try: # read the file byte by byte rather than reading the entire file into memory
     with open(filePath, 'rb') as fileDescriptor:
-      while True:
-        byte = fileDescriptor.read(1)
-        if not byte:
-          print fileDescriptor.tell()
-          print fileSize
-          break
+      data = 'a'
+      while data:
+        data = fileDescriptor.read(2)
+        if fileDescriptor.tell() == fileSize:
+          print "we can use tell"
         # we need the '1' + ... because python will trim the leading character if it's a zero
-        byte = bin(int('1' + binascii.hexlify(bytes), 16))[3:].zfill(8)
+        data = bin(int('1' + binascii.hexlify(bytes), 16))[3:].zfill(8)
         # send to IP address here
         packet = createPacket(protocol, ip, byte, port)
         send(packet, verbose=0)
