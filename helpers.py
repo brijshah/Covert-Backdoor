@@ -84,6 +84,7 @@ def sendFile(ip, filePath, protocol, port):
       data = 'a'
       while data:
         data = fileDescriptor.read(2)
+        print "test"
         if fileDescriptor.tell() == fileSize:
           print "we can use tell"
         # we need the '1' + ... because python will trim the leading character if it's a zero
@@ -93,6 +94,7 @@ def sendFile(ip, filePath, protocol, port):
         send(packet, verbose=0)
   except IOError:
     print "file error"
+  print "done"
 
 # we should pass the encrypted password + string (command results or something else)
 def sendMessage(message, password, protocol, ip, port):
@@ -100,6 +102,7 @@ def sendMessage(message, password, protocol, ip, port):
   for index, char in enumerate(message):
     packet = createPacket(protocol, ip, char, port)
     if index ==  lastIndex:
+      print "last packet"
       packet = packet/Raw(load=password)
     send(packet, verbose=0)
     time.sleep(0.1) # we should check if this is actually necessary
