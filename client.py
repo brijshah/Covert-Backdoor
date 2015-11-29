@@ -38,6 +38,7 @@ def recvCommand(packet):
         if packet.haslayer(Raw):
             if packet[Raw].load == configfile.password:
                 flag = True
+                print len(Results)
                 decryptedData = encryption.decrypt(Results, configfile.masterkey)
                 print decryptedData
                 Results = ""
@@ -52,6 +53,7 @@ def recvFile(packet):
             results += (dataReceived)
             if packet.haslayer(Raw):
                 if packet[Raw].load == configfile.password:
+                    print "2"
                     flag = True
                     decryptedData = encryption.decrypt(results, configfile.password)
                     print decryptedData
