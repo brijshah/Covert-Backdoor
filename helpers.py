@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import binascii, time, os, ntpath, encryption, configfile, logging
-=======
-import binascii, time, os, logging
->>>>>>> 30b3bebd64668234701cf28ae5b4c77fca846edd
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 
